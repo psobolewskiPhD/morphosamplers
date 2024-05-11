@@ -70,7 +70,8 @@ class NDimensionalSpline(EventedModel):
             new_order = n_samples - 1
             warnings.warn(
                 f"Too few points for spline of order {spline_order}. "
-                f"Decreasing order to {new_order}"
+                f"Decreasing order to {new_order}",
+                stacklevel=1,
             )
             values["order"] = new_order
 
@@ -88,7 +89,7 @@ class NDimensionalSpline(EventedModel):
             self._prepare_spline()
 
     def _prepare_spline(self) -> None:
-        """Spline parametrisation mapping [0, 1] to a smooth curve through spline points.
+        """Spline parametrisation mapping to a curve through spline points.
 
         Equidistant samples between 0 and 1 will yield points equidistant along
         the spline in euclidean space.
@@ -228,8 +229,10 @@ class NDimensionalSpline(EventedModel):
 
         The mask is True where values should be kept.
         """
-        # we need to be careful here because there are precision issues with splines
-        # and sometimes we get values below or above the limits when they should be equal
+        # we need to be careful here because there
+        # are precision issues with splines
+        # and sometimes we get values below or above the
+        # limits when they should be equal
         # so we use a special within_range function
         u = np.atleast_1d(u)
         mask = np.zeros_like(u, bool)
@@ -253,7 +256,8 @@ class Spline3D(NDimensionalSpline):
     _rotation_sampler = PrivateAttr(Slerp)
 
     @validator("points")
-    def _is_3d_coordinate_array(cls, v):
+    def is_coordinate_array(cls, v):
+        """Verify points are 3D."""
         if v.ndim != 2 or v.shape[-1] != 3:
             raise ValueError("must be an (n, 3) array")
         return v
@@ -263,12 +267,12 @@ class Spline3D(NDimensionalSpline):
         self._prepare_orientation_sampler()
 
     def _prepare_orientation_sampler(self):
-        """Prepare a pose_sampler yielding smoothly varying orientations along the spline.
+        """Prepare a pose_sampler yielding smoothly varying orientations.
 
         This method constructs a set of rotation matrices which vary smoothly with
-        the spline coordinate `u`. A pose_sampler is then prepared which can be queried at
-        any point(s) along the spline coordinate `u` and the resulting rotations vary
-        smoothly along the spline
+        the spline coordinate `u`. A pose_sampler is then prepared which
+        can be queried at any point(s) along the spline coordinate `u`
+        and the resulting rotations vary smoothly along the spline
         """
         u = np.linspace(0, 1, num=self._n_spline_samples)
         z = self._sample_spline_z(u)
@@ -284,7 +288,6 @@ class Spline3D(NDimensionalSpline):
         n_samples: Optional[int] = None,
     ) -> Rotation:
         """Local coordinate system at any point along the spline.
-
 
         Only one of u, separation or n_samples should be provided.
         """
